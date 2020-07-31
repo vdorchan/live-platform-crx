@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <ul>
+    <li>
+      <button class="btn-sync" data-id="200546023142">同步</button><span>超过30天的场次200546023142</span>
+    </li>
+    <li>
+      <button class="btn-sync" data-id="272922944268">同步</button><span>未开始场次272922944268</span>
+    </li>
+    <li>
+      <button class="btn-sync" data-id="123456">同步</button><span>不存在的场次123456</span>
+    </li>
+    <li>
+      <button class="btn-sync" data-id="273374574616">同步</button><span>273374574616</span>
+    </li>
+    <li>
+      <button class="btn-sync" data-id="272965417554">同步</button><span>272965417554</span>
+    </li>
+    <li>
+      <button class="btn-sync" data-id="273375907109">同步</button><span>273375907109</span>
+    </li>
+  </ul>
+
+  <button id="btn">同步所有</button>
+
+  <!-- <button id="btn">一次请求</button>
+  <button id="btn2">循环请求</button>
+  <button id="stop">暂停</button>
+  <button id="clear">清掉</button>
+
+  <div id="status"></div>
+  <div id="times"></div>
+
+  <div id="data"></div> -->
+
+  <!-- <iframe width="0" height="0-"
+    src="https://databot.taobao.com/tb/tblive?spm=a1z9u.8142865.0.0.7e7434edsEDs06&liveId=273374574616"
+    frameborder="0"></iframe> -->
+
+  <script>
+    const $status = document.getElementById('status')
+    const $times = document.getElementById('times')
+    const $data = document.getElementById('data')
+    const $clear = document.getElementById('clear')
+    const $btn = document.getElementById('btn')
+    const $btn2 = document.getElementById('btn2')
+    const $stop = document.getElementById('stop')
+
+    const $sync = document.querySelectorAll('.btn-sync')
+    $sync.forEach(btn => btn.onclick = (e) => {
+      const id = e.target.getAttribute('data-id')
+      window.postMessage({
+        type: 'LIVE_ASSISTANT_GET_SINGLE_LIVE',
+        data: id
+      }, '*')
+    })
+
+    $btn.onclick = () => {
+      window.postMessage({
+        type: 'LIVE_ASSISTANT_GET_ALL_LIVE'
+      }, '*')
+    }
+
+    // $btn.onclick = () => {
+    //   console.log('page send message')
+    //   window.postMessage({
+    //     type: 'LIVE_ASSISTANT_GET_SINGLE_LIVE',
+    //     data: 273374574616
+    //   }, '*');
+
+    //   // window.postMessage({
+    //   //   type: 'LIVE_ASSISTANT_GET_ALL_LIVE',
+    //   // }, '*');
+    //   // const iframe = document.createElement('iframe')
+    //   // iframe.src = 'https://databot.taobao.com/tb/tblive?spm=a1z9u.8142865.0.0.7e7434edpErHmP&liveId=272922348257'
+    //   // iframe.style.width = '800px'
+    //   // iframe.style.height = '800px'
+    //   // document.body.appendChild(iframe)
+    // }
+
+
+
+    // window.addEventListener('message', (event) => {
+    //   console.log('receive message:', event.data)
+
+    //   try {
+    //     const { data, type } = event.data
+    //     if (type === 'FROM_LIVE_ASSISTANT_LOAD_IFRAME') {
+    //       console.log('load iframe')
+    //       const iframe = document.createElement('iframe')
+    //       iframe.src = data
+    //       iframe.style.width = '800px'
+    //       iframe.style.height = '800px'
+    //       document.body.appendChild(iframe)
+    //     }
+    //   } catch (error) {
+
+    //   }
+    // })
+  </script>
+
+</body>
+
+</html>
