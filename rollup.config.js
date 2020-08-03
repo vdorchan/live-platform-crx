@@ -3,7 +3,6 @@ import commonjs from 'rollup-plugin-commonjs'
 import babel from 'rollup-plugin-babel'
 import replace from '@rollup/plugin-replace'
 import { terser } from 'rollup-plugin-terser'
-import livereload from 'rollup-plugin-livereload'
 
 const plugins = [
   nodeResolve(),

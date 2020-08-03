@@ -4,13 +4,11 @@
   "main": "src/main.js",
   "license": "MIT",
   "scripts": {
+    "start": "npm run dev",
+    "dev": "rollup -c -w",
     "build": "rollup -c"
   },
-  "dependencies": {
-    "@juggle/resize-observer": "^3.2.0",
-    "dayjs": "^1.8.30",
-    "moment": "^2.27.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.10.5",
     "@rollup/plugin-replace": "^2.3.3",
