@@ -1,0 +1,1 @@
+!function(e){"function"==typeof define&&define.amd?define(e):e()}((function(){"use strict";document.getElementById("J-checkUpdate");document.getElementById("J-liveSass").onclick=()=>{window.open("https://live.baowenonline.com")},console.log("123")}));

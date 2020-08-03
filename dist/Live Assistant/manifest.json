@@ -1,0 +1,48 @@
+{
+  "name": "Live Assistant",
+  "version": "0.1",
+  "description": "Live Assistant",
+  "permissions": [
+    "storage",
+    "*://*.taobao.com/*",
+    "*://*.baowenonline.com/*",
+    "webRequest",
+    "webRequestBlocking",
+    "notifications",
+    "tabs"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.baowenonline.com/*",
+        "http://127.0.0.1/"
+      ],
+      "js": [
+        "contentScript.js"
+      ]
+    }
+  ],
+  "browser_action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "32": "images/icon32.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    },
+    "default_title": "Live Assistant",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "manifest_version": 2
+}
