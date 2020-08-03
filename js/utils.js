@@ -1,4 +1,4 @@
-import { LIVE_LIST_PAGE } from './constant'
+import { LIVE_LIST_PAGE, LIVE_SASS_HOSTNAME, TEST_LIVE_SASS_HOSTNAME } from './constant'
 
 export function isLiveListPage(url) {
   return new RegExp(`^${LIVE_LIST_PAGE}`).test(url)
@@ -64,4 +64,52 @@ export const tabs = {
       )
     )
   },
+
+  focusOrCreateTab(url) {
+    chrome.windows.getAll({ populate: true }, function (windows) {
+      var existing_tab = null
+      for (var i in windows) {
+        var tabs = windows[i].tabs
+        for (var j in tabs) {
+          var tab = tabs[j]
+          if (tab.url == url) {
+            existing_tab = tab
+            break
+          }
+        }
+      }
+      if (existing_tab) {
+        chrome.tabs.update(existing_tab.id, { selected: true })
+      } else {
+        chrome.tabs.create({ url: url, selected: true })
+      }
+    })
+  },
+}
+
+export function notification(title, message, onClick) {
+  chrome.notifications.create(
+    '',
+    {
+      iconUrl: '../images/icon128.png',
+      type: 'basic',
+      title,
+      message,
+    },
+    (notificationId) => {
+      if (typeof onClick === 'function') {
+        let cb = (_notificationId) => {
+          notificationId === _notificationId && onClick()
+          chrome.notifications.onClicked.removeListener(cb)
+        }
+        chrome.notifications.onClicked.addListener(cb)
+      }
+    }
+  )
+}
+
+export function isContentPage(url = '') {
+  try {
+    return [LIVE_SASS_HOSTNAME, TEST_LIVE_SASS_HOSTNAME, '127.0.0.1'].includes(new URL(url).hostname)
+  } catch (error) {}
 }

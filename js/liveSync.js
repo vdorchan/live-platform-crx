@@ -5,24 +5,110 @@ import {
   sleep,
   fetchTaobao,
   tabs,
+  notification,
 } from './utils'
 
-import { urls, allQueryParams, allQueryParamsObj, LIVE_LIST_PAGE, LIVE_ACTION_API, LIVE_API } from './constant'
+import {
+  urls,
+  allQueryParams,
+  allQueryParamsObj,
+  LIVE_PLATFORM_HOST,
+  LIVE_LIST_PAGE,
+  LIVE_ACTION_API,
+  LIVE_API,
+} from './constant'
 
 const liveSync = {
   ongoing: false,
-  fetchingLiveInfo: null,
-  completed: false,
   tabId: null,
   status: {},
   urlListState: {},
   liveList: [],
+  liveListWithData: [],
   liveToGet: [],
-  isOverTime(time) {
+  liveListStatus: {
+    hasInit: false,
+    isIniting: false,
+  },
+  isInitingList: false,
+  fetching: {
+    total: 0,
+    totalCompleted: 0,
+    livePercent: 0,
+    liveInfo: null,
+  },
+  hasLogin: false,
+
+  isErrorTime(time) {
     // 仅保留近30日开播场次数据
-    return (new Date().getTime() - time) / 864e5 >= 30
+    const curTime = new Date().getTime()
+    const diffTime = curTime - time
+    const isBefore = diffTime > 0
+    const isAfter = diffTime / 864e5 < 30
+    if (isBefore && isAfter) {
+      return false
+    }
+    return isBefore ? 'isBefore' : 'isAfter'
+  },
+
+  setLiveList(liveList) {
+    this.liveList = liveList || this.liveList
+    this.liveListWithData = this.liveList.filter(
+      (live) => !this.isErrorTime(live.startTime)
+    )
+  },
+  isSameLive(live1, live2) {
+    return ['id', 'title', 'accountId', 'startTime'].every(
+      (key) => live1[key] === live2[key]
+    )
+  },
+  async initLiveList(popup) {
+    console.log('initLiveList')
+    let currentPage = 1
+    const _liveList = this.liveList
+    let hasMore = true
+    let liveList = []
+    while (hasMore) {
+      try {
+        const list = await this.getList(currentPage)
+        this.hasLogin = true
+
+        if (
+          currentPage++ === 1 &&
+          _liveList.length &&
+          this.isSameLive(list[0], _liveList[0])
+        ) {
+          liveList = _liveList
+          hasMore = false
+        } else {
+          liveList.push(...list)
+          hasMore = list.length >= 20
+        }
+      } catch (error) {
+        console.log(error)
+        hasMore = false
+        if (error.message === 'NOT_LOGIN' && popup) {
+          this.hasLogin = false
+          if (
+            confirm(
+              '您暂未登录淘宝直播后台，请先登录后再获取数据，是否马上去登录？'
+            )
+          ) {
+            this.createLoginTab()
+          }
+        }
+        throw new Error()
+      }
+    }
+    this.liveListStatus.isIniting = false
+    this.liveListStatus.hasInit = true
+    this.setLiveList(liveList)
+    chrome.storage.local.set({ liveList: JSON.stringify(this.liveList) }, () =>
+      console.log('store live list', this.liveList)
+    )
   },
   async getList(currentPage = 1) {
+    this.liveListStatus.isIniting = true
     if (currentPage === 1) {
       this.liveList = []
     }
@@ -33,15 +119,8 @@ const liveSync = {
       ...live,
       title: unescape(live.title),
     }))
-    this.liveList.push(...list)
-    if (list.length >= 20) {
-      await this.getList(++currentPage)
-    } else {
-      chrome.storage.local.set(
-        { liveList: JSON.stringify(this.liveList) },
-        () => console.log('store live list', this.liveList)
-      )
-    }
+
+    return list
   },
   getUrlKey(url) {
     return new URL(decodeURIComponent(url).replace(/\\/g, '')).searchParams
@@ -56,14 +135,14 @@ const liveSync = {
         urlKey,
       }
       try {
-        const res = await fetchTaobao(requestDetails.url)
-        if (res.ret && !res.ret.some((r) => r.includes('SUCCESS'))) {
-          throw new Error(res.ret.join('；'))
-        }
-        if (res.data.errCode !== 0) {
-          throw new Error(res.data.errMsg)
-        }
-        this.fnishSingleQuery(requestDetails)
+        // const res = await fetchTaobao(requestDetails.url)
+        // if (res.ret && !res.ret.some((r) => r.includes('SUCCESS'))) {
+        //   throw new Error(res.ret.join('；'))
+        // }
+        // if (res.data.errCode !== 0) {
+        //   throw new Error(res.data.errMsg)
+        // }
+        this.finishSingleQuery(requestDetails)
       } catch (error) {
         this.interceptWithErr(error.message)
       }
@@ -79,10 +158,11 @@ const liveSync = {
     const live = allQueryParams.find(({ cubeId }) => url.includes(cubeId))
     return live ? live.cubeId : ''
   },
-  fnishSingleQuery(requestDetails) {
+  finishSingleQuery(requestDetails) {
     const { urlKey } = this.urlListState[requestDetails.url]
     if (urlKey) {
       this.status[urlKey] = true
+      this.updateLiveProgress()
 
       if (
         Object.keys(allQueryParamsObj).every((urlKey) => this.status[urlKey])
@@ -113,7 +193,7 @@ const liveSync = {
       }
     } else {
       if (
-        details.url.includes('LIVE.taobao.com') &&
+        details.url.includes(LIVE_PLATFORM_HOST) &&
         this.isRequestFromBackground(details)
       ) {
         setHeader(details.requestHeaders, {
@@ -130,49 +210,26 @@ const liveSync = {
       this.tabId,
       {
         type: 'FROM_LIVE_ASSISTANT_LOAD_IFRAME',
-        data: `${LIVE_API}?spm=a1z9u.8142865.0.0.7e7434edpErHmP&liveId=${liveId}`,
+        data: `${LIVE_API}?liveId=${liveId}`,
       },
       (response) => {
         console.log(response)
       }
     )
   },
-  notification(title, message, onClick) {
-    chrome.notifications.create(
-      '',
-      {
-        iconUrl: '../images/icon128.png',
-        type: 'basic',
-        title,
-        message,
-      },
-      (notificationId) => {
-        if (typeof onClick === 'function') {
-          let cb = (_notificationId) => {
-            notificationId === _notificationId && onClick()
-            chrome.notifications.onClicked.removeListener(cb)
-          }
-          chrome.notifications.onClicked.addListener(cb)
-        }
-      }
-    )
-  },
-  getAllLive(tabId) {
-    this.liveToGet = this.liveList
-      .filter((live) => live.status === 1 || this.isOverTime(live.startTime))
-      .map((live) => live.id)
-    this.run(this.liveToGet.shift())
-  },
   createLoginTab() {
     let onUpdated = (tabId, changeInfo, tab) => {
       if (tabId === tab.id && isLiveListPage(changeInfo.url)) {
-        this.notification(
+        this.hasLogin = true
+        notification(
           '通知',
           '成功登陆中控台，回到豹播进行同步吧',
-          async () => {
-            chrome.tabs.highlight({ tabs: await tabs.getIndex(this.tabId) })
-          }
+          async () => {}
         )
+        setTimeout(async () => {
+          this.initLiveList()
+          chrome.tabs.highlight({ tabs: await tabs.getIndex(this.tabId) })
+        }, 1000)
         chrome.tabs.onUpdated.removeListener(onUpdated)
       }
     }
@@ -181,43 +238,40 @@ const liveSync = {
       chrome.tabs.onUpdated.addListener(onUpdated)
     })
   },
+  reConnectTab(tabId) {
+    if (this.liveToGet.length) {
+      notification('恢复同步', '你回到了豹播，将继续上次未完成的同步')
+      liveSync.startSync(tabId)
+    }
+  },
   async startSync(tabId, liveId) {
+    console.log('startSync', tabId, liveId, this.liveToGet)
     if (this.ongoing) {
-      this.notification('提示', '请等待当前同步完成')
+      notification('提示', '请等待当前同步完成')
       return false
     }
 
     this.tabId = tabId
     if (!this.liveList.length) {
-      this.notification('通知', '首次启动，请等待列表初始化')
-      try {
-        await this.getList()
-      } catch (error) {
-        console.log(error);
-        if (error.message === 'NOT_LOGIN') {
-          if (confirm('未登录中控台，是否马上去登录？')) {
-            this.createLoginTab()
-          }
-        }
-        return
-      }
+      notification('通知', '首次启动，请等待列表初始化')
+      await this.initLiveList(true)
     }
 
     if (liveId) {
       this.liveToGet = [liveId]
+    } else if (this.liveToGet && this.liveToGet.length) {
     } else {
-      this.liveToGet = this.liveList
-        .filter((live) => live.status === 1 && !this.isOverTime(live.startTime))
-        .map((live) => live.id)
-      this.notification(
+      this.liveToGet = this.liveListWithData.map((live) => live.id)
+
+      notification(
         '通知',
-        `即将开始同步该账号近30天的直播数据，共${this.liveToGet.length}条`
+        this.liveToGet.length
+          ? `即将开始同步该账号近30天的直播数据，共${this.liveToGet.length}条`
+          : '该账号下无任何直播场次'
       )
     }
+    this.updateTotalPorgress()
 
-    chrome.browserAction.setBadgeText({
-      text: String(this.liveToGet ? this.liveToGet.length : 1),
-    })
     this.run(this.liveToGet.shift())
   },
   initStatus() {
@@ -226,51 +280,85 @@ const liveSync = {
     this.urlListState = {}
   },
   async run(liveId) {
-    this.fetchingLiveInfo = this.liveList.find(
+    this.fetching.liveInfo = this.liveList.find(
       (live) => Number(live.id) === Number(liveId)
     )
-    console.log('run', this.fetchingLiveInfo)
+    console.log('run', this.fetching.liveInfo)
 
-    if (!this.fetchingLiveInfo) {
-      return this.notification(
+    if (!this.fetching.liveInfo) {
+      return notification('同步失败', `该账号下未找 id 为 ${liveId} 的场次`)
+    }
+
+    if (this.fetching.liveInfo.status === 4) {
+      return notification(
         '同步失败',
-        `该账号下未找 id 为 ${liveId} 的场次`
+        `该场次还未开始：${this.fetching.liveInfo.title}`
       )
     }
 
-    if (this.fetchingLiveInfo.status === 4) {
-      return this.notification(
+    if (this.fetching.liveInfo.status !== 1) {
+      return notification(
         '同步失败',
-        `该场次还未开始：${this.fetchingLiveInfo.title}`
+        `该场次状态不正确，为${this.fetching.liveInfo.status}：${this.fetching.liveInfo.title}`
       )
     }
 
-    if (this.fetchingLiveInfo.status !== 1) {
-      return this.notification(
+    const errorTimeType = this.isErrorTime(this.fetching.liveInfo.startTime)
+    if (errorTimeType === 'isAfter') {
+      return notification(
         '同步失败',
-        `该场次状态不正确，为${this.fetchingLiveInfo.status}：${this.fetchingLiveInfo.title}`
+        `仅保留近30日开播场次数据，当前场次数据已清除：${this.fetching.liveInfo.title}`
       )
     }
 
-    if (this.isOverTime(this.fetchingLiveInfo.startTime)) {
-      return this.notification(
+    if (errorTimeType === 'isBefore') {
+      return notification(
         '同步失败',
-        `仅保留近30日开播场次数据，当前场次数据已清除：${this.fetchingLiveInfo.title}`
+        `当前场次还未开播：${this.fetching.liveInfo.title}`
       )
     }
 
-    this.notification('同步中', `当前同步场次： ${this.fetchingLiveInfo.title}`)
+    notification('同步中', `当前同步场次： ${this.fetching.liveInfo.title}`)
     this.initStatus()
     this.ongoing = true
     this.loadIframe(liveId)
   },
-  async finish() {
-    this.notification('同步结束', `已同步 ${this.fetchingLiveInfo.title}`)
-    this.initStatus()
+  updateTotalPorgress(total) {
+    const totalRest = this.liveToGet.length
+
+    if (!this.fetching.total) {
+      this.fetching.total = totalRest
+    }
+
+    this.fetching.totalCompleted = totalRest
+    this.fetching.livePercent = 0
 
     chrome.browserAction.setBadgeText({
-      text: String((this.liveToGet ? this.liveToGet.length : '') || ''),
+      text: String(totalRest || ''),
     })
+
+    chrome.runtime.sendMessage({
+      type: 'progress',
+      data: this.fetching,
+    })
+  },
+  updateLiveProgress() {
+    const total = allQueryParams.length
+    const livePercent = Object.keys(this.status).length / total
+    this.fetching.livePercent = livePercent
+
+    chrome.runtime.sendMessage({
+      type: 'progress',
+      data: this.fetching,
+    })
+
+    console.log('updateLiveProgress', livePercent)
+  },
+  async finish() {
+    notification('同步结束', `已同步 ${this.fetching.liveInfo.title}`)
+    this.initStatus()
+
+    this.updateTotalPorgress()
 
     if (this.liveToGet.length) {
       await sleep(3000)
@@ -279,26 +367,11 @@ const liveSync = {
   },
   interceptWithErr(err) {
     this.initStatus()
-    this.notification(
-      '同步中断，请记录下列报错并暂停同步',
-      `同步发生了一些问题：${err}`
-    )
+    if (this.fetching.liveInfo) {
+      this.liveToGet.unshift(this.fetching.liveInfo.id)
+    }
+    notification('同步中断', `${err}`)
   },
 }
-
-chrome.webRequest.onBeforeSendHeaders.addListener(
-  liveSync.onBeforeSendHeaders.bind(liveSync),
-  { urls: ['https://*/*', 'http://*/*'] }, // filters
-  ['blocking', 'requestHeaders', 'extraHeaders'] // extraInfoSpec
-)
-
-chrome.storage.local.get(['liveList'], function (result) {
-  console.log('get live list from store', result)
-  try {
-    liveSync.liveList = JSON.parse(result.liveList)
-  } catch (error) {
-    liveSync.liveList = []
-  }
-})
 
 export default liveSync
