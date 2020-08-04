@@ -11,7 +11,7 @@ console.log(liveSync)
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
   liveSync.onBeforeSendHeaders.bind(liveSync),
-  { urls: ['https://*/*', 'http://*/*'] }, // filters
+  { urls: ['*://*.taobao.com/*'] }, // filters
   ['blocking', 'requestHeaders', 'extraHeaders'] // extraInfoSpec
 )
 
@@ -59,12 +59,11 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   // tab removed during syncing
   console.log(liveSync.tabId, tabId, removeInfo)
   if (liveSync.tabId === tabId && liveSync.ongoing) {
-    liveSync.interceptWithErr('你退出了豹播，同步中断')
+    liveSync.pause('你退出了豹播，同步将会在下次进入豹播后继续')
   }
 })
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // console.log(tabId, changeInfo, tab, changeInfo.status, tab.url, isContentPage(tab.url))
   if (changeInfo.status === 'complete' && isContentPage(tab.url)) {
     liveSync.reConnectTab(tabId)
   }
