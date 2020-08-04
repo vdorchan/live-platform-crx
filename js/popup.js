@@ -12,14 +12,19 @@ $('#update').onclick = () => {
 }
 
 async function setVersionMsg() {
-  $('#version').innerHTML = `version ${chrome.app.getDetails().version}`
+  $('#version').innerHTML = `${
+    process.env.NODE_ENV === 'production' ? '' : '开发测试版 '
+  }version ${chrome.app.getDetails().version}`
   const latestVersion = await checkLatestVersion()
   $('#update').parentNode.style.display = latestVersion ? 'inline' : 'none'
+  return latestVersion
 }
 
 setVersionMsg()
 
-btnCheckUpdate.onclick = () => setVersionMsg()
+btnCheckUpdate.onclick = () => {
+  if (!setVersionMsg()) alert('你安装的已是最新版本')
+}
 
 btnLiveSass.onclick = () => {
   window.open(LIVE_SASS_HOSTNAME)
