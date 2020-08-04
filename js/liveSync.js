@@ -235,10 +235,11 @@ const liveSync = {
           '成功登陆中控台，回到豹播进行同步吧',
           async () => {}
         )
-        setTimeout(async () => {
+
+        tabs.getIndex(this.tabId).then((tabs) => {
           this.initLiveList()
-          chrome.tabs.highlight({ tabs: await tabs.getIndex(this.tabId) })
-        }, 1000)
+          chrome.tabs.highlight({ tabs })
+        })
         chrome.tabs.onUpdated.removeListener(onUpdated)
       }
     }
