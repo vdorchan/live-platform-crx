@@ -1,9 +1,24 @@
-const $ = (s) =>
-  /^#\S+/.test(s)
-    ? document.getElementById(s.replace(/^#/, ''))
-    : document.querySelector(s)
+import { request, checkLatestVersion } from './utils'
+const $ = (s) => document.querySelector(s)
 const btnCheckUpdate = $('#J-checkUpdate')
 const btnLiveSass = $('#J-liveSass')
+const versionMsg = $('#J-version')
+
+$('#update').onclick = () => {
+  chrome.tabs.create({
+    url: 'https://livedev.baowenonline.com/api/plugin/download',
+  })
+}
+
+async function setVersionMsg() {
+  $('#version').innerHTML = `version ${chrome.app.getDetails().version}`
+  const latestVersion = await checkLatestVersion()
+  $('#update').parentNode.style.display = latestVersion ? 'inline' : 'none'
+}
+
+setVersionMsg()
+
+btnCheckUpdate.onclick = () => setVersionMsg()
 
 btnLiveSass.onclick = () => {
   window.open('https://live.baowenonline.com')
@@ -31,7 +46,9 @@ const getLiveList = () =>
 
     $('#J-liveListCount').innerHTML = text
     $('#J-canSyncLiveListCount').innerHTML = text2
-    $('#J-canSyncLiveListCount').previousElementSibling.style.display = text2 ? 'block' : 'none'
+    $('#J-canSyncLiveListCount').previousElementSibling.style.display = text2
+      ? 'block'
+      : 'none'
   })
 
 getLiveList()
