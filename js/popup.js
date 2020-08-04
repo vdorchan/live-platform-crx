@@ -1,4 +1,5 @@
-import { request, checkLatestVersion } from './utils'
+import { checkLatestVersion } from './api'
+import { LIVE_SASS_API, LIVE_SASS_HOSTNAME } from './constant'
 const $ = (s) => document.querySelector(s)
 const btnCheckUpdate = $('#J-checkUpdate')
 const btnLiveSass = $('#J-liveSass')
@@ -6,7 +7,7 @@ const versionMsg = $('#J-version')
 
 $('#update').onclick = () => {
   chrome.tabs.create({
-    url: 'https://livedev.baowenonline.com/api/plugin/download',
+    url: `${LIVE_SASS_API}/plugin/download`,
   })
 }
 
@@ -21,7 +22,7 @@ setVersionMsg()
 btnCheckUpdate.onclick = () => setVersionMsg()
 
 btnLiveSass.onclick = () => {
-  window.open('https://live.baowenonline.com')
+  window.open(LIVE_SASS_HOSTNAME)
 }
 
 const getLiveList = () =>
@@ -52,56 +53,3 @@ const getLiveList = () =>
   })
 
 getLiveList()
-
-/* const totalProgress = $('#J-totalProgress')
-const liveTitle = $('#J-liveTitle')
-const livePercent = $('#J-livePercent')
-
-const domUpdateFn = {
-  totalProgress(fetching) {
-    totalProgress.innerHtml = `${fetching.totalCompleted}/${fetching.total}`
-  },
-  liveInfo(fetching) {
-    liveTitle.innerText = fetching.liveInfo.title
-  },
-  livePercent(fetching) {
-    livePercent.innerText = Math.ceil(fetching.livePercent * 100)
-  },
-}
-
-const fetching = new Proxy(
-  {},
-  {
-    set: function (obj, prop, value) {
-      if (obj[prop] === value) {
-        return true
-      }
-      onFetchUpdate(prop, value)
-      obj[prop] = value
-      return true
-    },
-    get: function (target, prop, receiver) {
-      return 'world'
-    },
-  }
-)
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('popup received progress', request)
-  if (request.type === 'progress') {
-    Object.entries(request.data).forEach(
-      (entries) => (fetching[entries[0]] = entries[1])
-    )
-  }
-  sendResponse('')
-})
-
-function onFetchUpdate(prop, value) {
-  if (['total', 'totalComplete'].includes(prop)) {
-    domUpdateFn.totalProgress(fetching)
-  } else {
-    const updateFn = domUpdateFn[prop]
-    updateFn && updateFn()
-  }
-  console.log('onFetchUpdate', prop, value)
-} */

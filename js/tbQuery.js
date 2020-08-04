@@ -135,3 +135,11 @@ allQueryParams.forEach((p) => {
     toSaveApi: p.toSaveApi,
   }
 })
+
+/* console.log(
+  urls.map((url) => ({
+    param: new URL(decodeURIComponent(url).replace(/\\/g, '')).searchParams.get(
+      'data'
+    ),
+  }))
+) */

@@ -3,22 +3,20 @@ import {
   isLiveListPage,
   setHeader,
   sleep,
-  fetchTaobao,
+  request,
   tabs,
   notification,
-  postData,
   log,
 } from './utils'
 
+import { postData } from './api'
+export { urls, allQueryParams, allQueryParamsObj } from './tbQuery'
 import {
-  urls,
-  allQueryParams,
-  allQueryParamsObj,
   LIVE_PLATFORM_HOST,
   LIVE_LIST_PAGE,
   LIVE_ACTION_API,
   LIVE_API,
-  actionType
+  actionType,
 } from './constant'
 
 const liveSync = {
@@ -67,7 +65,7 @@ const liveSync = {
     )
   },
   async initLiveList(popup) {
-    log(actionType.INIT_LIVE_LIST)
+    log.info(actionType.INIT_LIVE_LIST)
     let currentPage = 1
     const _liveList = this.liveList
     let hasMore = true
@@ -117,7 +115,7 @@ const liveSync = {
     if (currentPage === 1) {
       this.liveList = []
     }
-    const res = await fetchTaobao(
+    const res = await request(
       `${LIVE_ACTION_API}?currentPage=${currentPage}&pagesize=20&api=get_live_list`
     )
     const list = res.model.data.map((live) => ({
@@ -141,7 +139,7 @@ const liveSync = {
         urlKey,
       }
       try {
-        const res = await fetchTaobao(requestDetails.url)
+        const res = await request(requestDetails.url)
         if (res.ret && !res.ret.some((r) => r.includes('SUCCESS'))) {
           throw new Error(res.ret.join('；'))
         }
@@ -448,7 +446,7 @@ const liveSync = {
       }))(this.fetching.liveInfo),
     }
 
-    log(actionType.SAVE_DATA, this.dataToSave, liveData)
+    log.info(actionType.SAVE_DATA, this.dataToSave, liveData)
     const res = await postData('tbMonitorLiveProfile/save', liveData)
 
     for (const key in this.dataToSave) {
