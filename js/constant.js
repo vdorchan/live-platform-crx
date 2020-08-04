@@ -36,6 +36,7 @@ export const allQueryParams = [
     toSaveDataProp: 'liveMaxOnlineDataStr',
     param:
       '{"param":"{"queryId":"0|9616773|undefined","cubeId":"tblive_rpt_ind_trend","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":1,"row":"[]","measure":"[{"name":"峰值PM在线人数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorLiveEffect/saveLiveMaxOnlineData',
   },
   // 总览 观看次数
   {
@@ -43,6 +44,7 @@ export const allQueryParams = [
     toSaveDataProp: 'accessAndTransformDataStr',
     param:
       '{"param":"{"queryId":"1|95654043|undefined","cubeId":"tblive_rpt_abstract_indicator","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":1,"row":"[]","measure":"[{"name":"观看次数","isMeasure":true},{"name":"额外奖励流量","isMeasure":true},{"name":"计算平均在线时长","isMeasure":true},{"name":"引导进店次数","isMeasure":true},{"name":"新增粉丝数","isMeasure":true},{"name":"PM观看次数","isMeasure":true},{"name":"PM在线人数","isMeasure":true},{"name":"计算封面图点击率","isMeasure":true},{"name":"直播间浏览次数_粉丝占比","isMeasure":true},{"name":"引导进店次数_粉丝占比","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorLiveEffect/saveAccessAndTransformData',
   },
   // 总览全局数据 引导成交笔数
   {
@@ -50,6 +52,7 @@ export const allQueryParams = [
     toSaveDataProp: 'liveSummaryOrderDataStr',
     param:
       '{"param":"{"queryId":"2|87451842|undefined","cubeId":"dws_mit_cbot_slr_lime_rpt_ov_deal","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":1,"row":"[]","measure":"[{"name":"引导成交笔数","isMeasure":true},{"name":"引导成交笔数_粉丝占比","isMeasure":true},{"name":"引导成交金额","isMeasure":true},{"name":"引导成交金额_粉丝占比","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorLiveEffect/saveLiveSummaryOrderData',
   },
   // 总览全局数据 在线时长
   {
@@ -57,36 +60,42 @@ export const allQueryParams = [
     toSaveDataProp: 'liveAvgOnlineData',
     param:
       '{"param":"{"queryId":"3|21472062|undefined","cubeId":"tblive_rpt_abstract_indicator","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":1,"row":"[]","measure":"[{"name":"计算平均在线时长","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"是否粉丝","type":"dimension","isMeasure":false,"values":["Y"],"oper":"="},{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorLiveEffect/saveLiveAvgOnlineData',
   },
   {
     cubeId: 'tblive_rpt_ind_trend',
     toSaveDataProp: 'liveRealtimeTendDataStr',
     param:
       '{"param":"{"queryId":"4|65884581|undefined","cubeId":"tblive_rpt_ind_trend","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"时间精确到分钟","isMeasure":false}]","measure":"[{"name":"PM观看次数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorRealtimeTend/saveRealtimeTendData',
   },
   {
     cubeId: 'tblive_rpt_ind_trend',
     toSaveDataProp: 'liveRealtimeTendDataStr',
     param:
       '{"param":"{"queryId":"5|30278359|undefined","cubeId":"tblive_rpt_ind_trend","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"时间精确到分钟","isMeasure":false}]","measure":"[{"name":"观看次数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorRealtimeTend/saveRealtimeTendData',
   },
   {
     cubeId: 'tblive_rpt_ind_trend',
     toSaveDataProp: 'liveRealtimeTendDataStr',
     param:
       '{"param":"{"queryId":"6|93131114|undefined","cubeId":"tblive_rpt_ind_trend","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"时间精确到分钟","isMeasure":false}]","measure":"[{"name":"PM在线人数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorRealtimeTend/saveRealtimeTendData',
   },
   {
     cubeId: 'mit_cbot_slr_lime_rpt_ov_trend_deal',
     toSaveDataProp: 'liveRealtimeTendDataStr',
     param:
       '{"param":"{"queryId":"7|5760439|undefined","cubeId":"mit_cbot_slr_lime_rpt_ov_trend_deal","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"时间精确到分钟","isMeasure":false}]","measure":"[{"name":"引导成交金额","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorRealtimeTend/saveRealtimeTendData',
   },
   {
     cubeId: 'tblive_rpt_ind_trend',
     toSaveDataProp: 'liveRealtimeTendDataStr',
     param:
       '{"param":"{"queryId":"8|5024396|undefined","cubeId":"tblive_rpt_ind_trend","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"时间精确到分钟","isMeasure":false}]","measure":"[{"name":"引导进店次数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorRealtimeTend/saveRealtimeTendData',
   },
   {
     cubeId: 'tblive_rpt_ind_trend',
@@ -107,6 +116,7 @@ export const allQueryParams = [
     toSaveDataProp: 'productViewDataStr',
     param:
       '{"param":"{"queryId":"11|33606177|undefined","cubeId":"tblive_rpt_item_indicator","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"商品id","isMeasure":false},{"name":"主图地址","isMeasure":false},{"name":"商品标题","isMeasure":false}]","measure":"[{"name":"商品点击次数","isMeasure":true},{"name":"商品点击人数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorSourceChannel/saveSourceChannelData',
   },
   // 总览全局数据 商品引导
   {
@@ -114,6 +124,7 @@ export const allQueryParams = [
     toSaveDataProp: 'productOrderDataStr',
     param:
       '{"param":"{"queryId":"12|83415245|undefined","cubeId":"dws_mit_cbot_slr_lime_rpt_itm_deal","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"商品id","isMeasure":false}]","measure":"[{"name":"引导成交件数","isMeasure":true},{"name":"引导成交金额","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+    toSaveApi: '/tbMonitorLiveItem/saveProductOrderData',
   },
 ]
 
@@ -122,5 +133,6 @@ allQueryParams.forEach((p) => {
   allQueryParamsObj[p.param.replace(/[0-9undefined]/g, '')] = {
     cubeId: p.cubeId,
     toSaveDataProp: p.toSaveDataProp,
+    toSaveApi: p.toSaveApi
   }
 })
