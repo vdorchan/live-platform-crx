@@ -1,5 +1,6 @@
 import { request } from './utils'
 import { LIVE_SASS_HOSTNAME, DATA_SAVE_BASE_API } from './constant'
+import compareVersions from 'compare-versions'
 
 export function getLatestVersion() {
   return request(`${LIVE_SASS_HOSTNAME}/api/plugin/version`)
