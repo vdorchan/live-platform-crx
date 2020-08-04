@@ -3,55 +3,106 @@ import commonjs from 'rollup-plugin-commonjs'
 import babel from 'rollup-plugin-babel'
 import replace from '@rollup/plugin-replace'
 import { terser } from 'rollup-plugin-terser'
+import copy from 'rollup-plugin-copy'
 
-const plugins = [
-  nodeResolve(),
-  babel({
-    exclude: 'node_modules/**',
-  }),
-  replace({
-    'process.env.NODE_ENV': JSON.stringify('production'),
-  }),
-  terser({
-    compress: {
-      pure_getters: true,
-      unsafe: true,
-      unsafe_comps: true,
-      warnings: false,
-    },
-  }),
-  commonjs(),
-]
+const crxName = 'Live Assistant'
+const prodOutput = `dist/${crxName}`
+const testOutput = `dist/${crxName} Test`
+
+const getPlugins = (env, output) => {
+  return {
+    plugins: [
+      copy({
+        targets: [
+          { src: 'popup.html', dest: output },
+          { src: 'images/**/*', dest: `${output}/images` },
+          { src: 'css/**/*', dest: `${output}/css` },
+        ],
+      }),
+      nodeResolve(),
+      babel({
+        exclude: 'node_modules/**',
+      }),
+      replace({
+        'process.env.NODE_ENV': JSON.stringify(env),
+      }),
+      ...(env === 'production'
+        ? [
+            terser({
+              compress: {
+                pure_getters: true,
+                unsafe: true,
+                unsafe_comps: true,
+                warnings: false,
+              },
+            }),
+          ]
+        : []),
+      commonjs(),
+    ],
+  }
+}
 
 export default [
   {
     input: 'js/background.js',
     output: {
-      file: 'dist/Live Assistant/background.js',
+      file: `${prodOutput}/background.js`,
       format: 'umd',
       name: 'background',
       indent: false,
     },
-    plugins,
+    ...getPlugins('production', prodOutput),
   },
   {
     input: 'js/popup.js',
     output: {
-      file: 'dist/Live Assistant/popup.js',
+      file: `${prodOutput}/popup.js`,
       format: 'umd',
       name: 'popup',
       indent: false,
     },
-    plugins,
+    ...getPlugins('production', prodOutput),
   },
   {
     input: 'js/contentScript.js',
     output: {
-      file: 'dist/Live Assistant/contentScript.js',
+      file: `${prodOutput}/contentScript.js`,
       format: 'umd',
       name: 'contentScript',
       indent: false,
     },
-    plugins,
+    ...getPlugins('production', prodOutput),
   },
+
+  {
+    input: 'js/background.js',
+    output: {
+      file: `${testOutput}/background.js`,
+      format: 'umd',
+      name: 'background',
+      indent: false,
+    },
+    ...getPlugins('test', testOutput),
+  },
+  {
+    input: 'js/popup.js',
+    output: {
+      file: `${testOutput}/popup.js`,
+      format: 'umd',
+      name: 'popup',
+      indent: false,
+    },
+    ...getPlugins('test', testOutput),
+  },
+  {
+    input: 'js/contentScript.js',
+    output: {
+      file: `${testOutput}/contentScript.js`,
+      format: 'umd',
+      name: 'contentScript',
+      indent: false,
+    },
+    ...getPlugins('test', testOutput),
+  }
 ]
