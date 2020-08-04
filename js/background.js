@@ -1,7 +1,8 @@
 'use strict'
 
 import liveSync from './liveSync'
-import { notification, isContentPage } from './utils'
+import { notification, isContentPage, log } from './utils'
+import { actionType } from './constant'
 
 chrome.browserAction.setBadgeText({
   text: '',
@@ -16,7 +17,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 )
 
 chrome.storage.local.get(['liveList'], function (result) {
-  console.log('get live list from store', result)
+  log.info(actionType.GET_LIVE_LIST_FROM_STORE, result)
   try {
     const liveList = JSON.parse(result.liveList)
     liveSync.setLiveList(liveList)
@@ -57,7 +58,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   // tab removed during syncing
-  console.log(liveSync.tabId, tabId, removeInfo)
+  console.log(actionType.SYNC_TAB_REMOVED, liveSync.tabId, tabId, removeInfo)
   if (liveSync.tabId === tabId && liveSync.ongoing) {
     liveSync.pause('你退出了豹播，同步将会在下次进入豹播后继续')
   }

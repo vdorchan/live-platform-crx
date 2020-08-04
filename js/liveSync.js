@@ -6,6 +6,8 @@ import {
   fetchTaobao,
   tabs,
   notification,
+  postData,
+  log,
 } from './utils'
 
 import {
@@ -16,6 +18,7 @@ import {
   LIVE_LIST_PAGE,
   LIVE_ACTION_API,
   LIVE_API,
+  actionType
 } from './constant'
 
 const liveSync = {
@@ -38,13 +41,14 @@ const liveSync = {
     liveInfo: null,
   },
   hasLogin: false,
+  dataToSave: [],
 
   isErrorTime(time) {
     // 仅保留近30日开播场次数据
     const curTime = new Date().getTime()
     const diffTime = curTime - time
-    const isBefore = diffTime > 0
-    const isAfter = diffTime / 864e5 < 30
+    const isBefore = diffTime / 864e5 > 30
+    const isAfter = diffTime < 0
     if (isBefore && isAfter) {
       return false
     }
@@ -63,7 +67,7 @@ const liveSync = {
     )
   },
   async initLiveList(popup) {
-    console.log('initLiveList')
+    log(actionType.INIT_LIVE_LIST)
     let currentPage = 1
     const _liveList = this.liveList
     let hasMore = true
@@ -85,7 +89,7 @@ const liveSync = {
           hasMore = list.length >= 20
         }
       } catch (error) {
-        console.log(error)
+        log.error(actionType.INIT_LIVE_LIST, error.message)
         hasMore = false
         if (error.message === 'NOT_LOGIN' && popup) {
           this.hasLogin = false
@@ -97,14 +101,15 @@ const liveSync = {
             this.createLoginTab()
           }
         }
-        throw new Error()
+
+        return false
       }
     }
     this.liveListStatus.isIniting = false
     this.liveListStatus.hasInit = true
     this.setLiveList(liveList)
     chrome.storage.local.set({ liveList: JSON.stringify(this.liveList) }, () =>
-      console.log('store live list', this.liveList)
+      log.info(actionType.STORE_LIVE_LIST, this.liveList)
     )
   },
   async getList(currentPage = 1) {
@@ -129,22 +134,30 @@ const liveSync = {
   },
   async startFetch(requestDetails) {
     const urlKey = this.getUrlKey(requestDetails.url)
-    if (allQueryParamsObj[urlKey]) {
+    const queryParams = allQueryParamsObj[urlKey]
+    if (queryParams) {
       this.urlListState[requestDetails.url] = {
         header: requestDetails.requestHeaders,
         urlKey,
       }
       try {
-        // const res = await fetchTaobao(requestDetails.url)
-        // if (res.ret && !res.ret.some((r) => r.includes('SUCCESS'))) {
-        //   throw new Error(res.ret.join('；'))
-        // }
-        // if (res.data.errCode !== 0) {
-        //   throw new Error(res.data.errMsg)
-        // }
+        const res = await fetchTaobao(requestDetails.url)
+        if (res.ret && !res.ret.some((r) => r.includes('SUCCESS'))) {
+          throw new Error(res.ret.join('；'))
+        }
+        if (res.data.errCode !== 0) {
+          throw new Error(res.data.errMsg)
+        }
+        this.dataToSave.push({
+          data: {
+            liveId: this.fetching.liveInfo.id,
+            [queryParams.toSaveDataProp]: JSON.stringify(res.data.data),
+          },
+          api: queryParams.toSaveApi,
+        })
         this.finishSingleQuery(requestDetails)
       } catch (error) {
-        this.interceptWithErr(error.message)
+        this.interceptWithErr(`unable to fetch: ${error.message}`)
       }
     }
   },
@@ -183,7 +196,7 @@ const liveSync = {
             details.requestHeaders = header
           }
         } catch (error) {
-          console.log('error header')
+          log.error(BLOCK_HEADERS, error.message)
         }
       } else if (details.frameId) {
         this.startFetch(details)
@@ -212,9 +225,7 @@ const liveSync = {
         type: 'FROM_LIVE_ASSISTANT_LOAD_IFRAME',
         data: `${LIVE_API}?liveId=${liveId}`,
       },
-      (response) => {
-        console.log(response)
-      }
+      (response) => {}
     )
   },
   createLoginTab() {
@@ -245,7 +256,11 @@ const liveSync = {
     }
   },
   async startSync(tabId, liveId) {
-    console.log('startSync', tabId, liveId, this.liveToGet)
+    log.info(actionType.START_LIVE_SYNC, {
+      tabId,
+      liveId,
+      liveToGet: this.liveToGet,
+    })
     if (this.ongoing) {
       notification('提示', '请等待当前同步完成')
       return false
@@ -254,7 +269,9 @@ const liveSync = {
     this.tabId = tabId
     if (!this.liveList.length) {
       notification('通知', '首次启动，请等待列表初始化')
-      await this.initLiveList(true)
+      if (!(await this.initLiveList(true))) {
+        return
+      }
     }
 
     if (liveId) {
@@ -278,42 +295,37 @@ const liveSync = {
     this.ongoing = false
     this.status = {}
     this.urlListState = {}
+    this.dataToSave = []
   },
   async run(liveId) {
     this.fetching.liveInfo = this.liveList.find(
       (live) => Number(live.id) === Number(liveId)
     )
-    console.log('run', this.fetching.liveInfo)
+    log.info(actionType.SINGLE_LIVE_SYNC, this.fetching.liveInfo)
 
     if (!this.fetching.liveInfo) {
-      return notification('同步失败', `该账号下未找 id 为 ${liveId} 的场次`)
+      return this.syncFailed(`该账号下未找 id 为 ${liveId} 的场次`)
     }
 
     if (this.fetching.liveInfo.status === 4) {
-      return notification(
-        '同步失败',
-        `该场次还未开始：${this.fetching.liveInfo.title}`
-      )
+      return this.syncFailed(`该场次还未开始：${this.fetching.liveInfo.title}`)
     }
 
     if (this.fetching.liveInfo.status !== 1) {
-      return notification(
-        '同步失败',
+      return this.syncFailed(
         `该场次状态不正确，为${this.fetching.liveInfo.status}：${this.fetching.liveInfo.title}`
       )
     }
 
     const errorTimeType = this.isErrorTime(this.fetching.liveInfo.startTime)
-    if (errorTimeType === 'isAfter') {
-      return notification(
-        '同步失败',
+    if (errorTimeType === 'isBefore') {
+      return this.syncFailed(
         `仅保留近30日开播场次数据，当前场次数据已清除：${this.fetching.liveInfo.title}`
       )
     }
 
-    if (errorTimeType === 'isBefore') {
-      return notification(
-        '同步失败',
+    if (errorTimeType === 'isAfter') {
+      return this.syncFailed(
         `当前场次还未开播：${this.fetching.liveInfo.title}`
       )
     }
@@ -352,25 +364,100 @@ const liveSync = {
       data: this.fetching,
     })
 
-    console.log('updateLiveProgress', livePercent)
+    log.info(actionType.LIVE_PROGRESS, livePercent)
+  },
+  syncFailed(msg) {
+    notification('同步失败', msg)
+    this.initStatus()
+    this.updateTotalPorgress()
   },
   async finish() {
-    notification('同步结束', `已同步 ${this.fetching.liveInfo.title}`)
-    this.initStatus()
+    try {
+      await this.save()
+      notification('同步结束', `已同步 ${this.fetching.liveInfo.title}`)
 
-    this.updateTotalPorgress()
-
-    if (this.liveToGet.length) {
-      await sleep(3000)
-      this.run(this.liveToGet.shift())
+      if (this.liveToGet.length) {
+        setTimeout(() => {
+          this.run(this.liveToGet.shift())
+        }, 3000)
+      }
+    } catch (error) {
+      this.interceptWithErr(`save failed: ${error.message}`)
     }
+
+    this.initStatus()
+    this.updateTotalPorgress()
   },
-  interceptWithErr(err) {
+  pause(msg) {
     this.initStatus()
     if (this.fetching.liveInfo) {
       this.liveToGet.unshift(this.fetching.liveInfo.id)
     }
     notification('同步中断', `${err}`)
+  },
+  interceptWithErr(err) {
+    this.initStatus()
+    notification('同步中断', `${err}`)
+  },
+  async save() {
+    const liveData = {
+      viewCount: this.fetching.liveInfo.extendsMap.totalPV,
+      liveId: this.fetching.liveInfo.id,
+      expired: false,
+      descInfo: '',
+      praiseCount: 0,
+      joinCount: 0,
+      totalJoinCount: 0,
+      totalViewCount: 0,
+      ...(({
+        accountId,
+        appointmentTime,
+        approval,
+        bizCode,
+        coverImg,
+        coverImg169,
+        coverImg916,
+        endTime,
+        liveChannelId,
+        liveColumnId,
+        location,
+        nativeFeedDetailUrl,
+        publishSource,
+        startTime,
+        title,
+        type,
+        userNick,
+      }) => ({
+        accountId,
+        appointmentTime,
+        approval,
+        bizCode,
+        coverImg,
+        coverImg169,
+        coverImg916,
+        endTime,
+        liveChannelId,
+        liveColumnId,
+        location,
+        nativeFeedDetailUrl,
+        publishSource,
+        startTime,
+        title,
+        type,
+        userNick,
+      }))(this.fetching.liveInfo),
+    }
+
+    log(actionType.SAVE_DATA, this.dataToSave, liveData)
+    const res = await postData('tbMonitorLiveProfile/save', liveData)
+
+    for (const key in this.dataToSave) {
+      const { api, data } = this.dataToSave[key]
+      const res = await postData(api, data)
+      if (res.status !== 0) {
+        throw new Error(res.msg)
+      }
+    }
   },
 }
 

@@ -1,4 +1,13 @@
-import { LIVE_LIST_PAGE, LIVE_SASS_HOSTNAME, TEST_LIVE_SASS_HOSTNAME } from './constant'
+import {
+  LIVE_LIST_PAGE,
+  LIVE_SASS_HOSTNAME,
+  TEST_LIVE_SASS_HOSTNAME,
+  DATA_SAVE_BASE_API,
+} from './constant'
+import compareVersions from 'compare-versions'
+
+let mmgsToken
+let refreshTokenTimes = 0
 
 export function isLiveListPage(url) {
   return new RegExp(`^${LIVE_LIST_PAGE}`).test(url)
@@ -36,13 +45,14 @@ export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export async function fetchTaobao(url) {
+export async function request(url, options) {
   const response = await fetch(url, {
     referrerPolicy: 'no-referrer-when-downgrade',
     body: null,
     method: 'GET',
     mode: 'cors',
     credentials: 'include',
+    ...options,
   })
 
   if (/^https:\/\/login.taobao.com\/member\/login\.jhtml/.test(response.url)) {
@@ -52,8 +62,47 @@ export async function fetchTaobao(url) {
   if (response.status === 200) {
     return response.json()
   } else {
-    throw new Error(response)
+    throw new Error(`response error: ${response.status}`)
   }
+}
+
+export async function fetchTaobao(url) {
+  return request(url)
+}
+
+export async function refreshToken() {
+  if (refreshTokenTimes > 3) {
+    throw new Error('refresh token too many times')
+  }
+  ++refreshTokenTimes
+  const data = await request(
+    'https://testlive.baowenonline.com/api/sl-schedule-lives/token/get'
+  )
+  mmgsToken = data.data
+  console.log('refreshToken', mmgsToken)
+}
+
+export async function postData(url, data, headers) {
+  if (!mmgsToken) {
+    await refreshToken()
+  }
+  const res = await request(`${DATA_SAVE_BASE_API}${url}`, {
+    body: JSON.stringify(data),
+    method: 'POST',
+    headers: {
+      accountId: 350, // getUserInfo id
+      sessionId: mmgsToken,
+      'content-type': 'application/json',
+    },
+    referrer: 'no-referrer',
+  })
+
+  if (res.status === -1 && res.msg === '身份无效！') {
+    await refreshToken()
+    return postData(url, data, headers)
+  }
+  refreshTokenTimes = 0
+  return res
 }
 
 export const tabs = {
@@ -110,6 +159,28 @@ export function notification(title, message, onClick) {
 
 export function isContentPage(url = '') {
   try {
-    return [LIVE_SASS_HOSTNAME, TEST_LIVE_SASS_HOSTNAME, '127.0.0.1'].includes(new URL(url).hostname)
+    return [LIVE_SASS_HOSTNAME, TEST_LIVE_SASS_HOSTNAME, '127.0.0.1'].includes(
+      new URL(url).hostname
+    )
   } catch (error) {}
+}
+
+export async function checkLatestVersion() {
+  const latestVersion = (
+    await request('https://livedev.baowenonline.com/api/plugin/version')
+  ).data
+  const currentVersion = chrome.app.getDetails().version
+
+  return compareVersions(latestVersion, currentVersion) > 0
+    ? latestVersion
+    : false
+}
+
+export const log = {
+  info(type, ...msg) {
+    console.log(`===${type}===`, ...msg)
+  },
+  error(type, ...msg) {
+    console.log(`ERROR: ===${type}===`, ...msg)
+  },
 }
