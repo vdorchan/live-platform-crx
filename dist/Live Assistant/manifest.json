@@ -1,6 +1,6 @@
 {
   "name": "Live Assistant",
-  "version": "0.1",
+  "version": "0.0.1",
   "description": "Live Assistant",
   "permissions": [
     "storage",
@@ -9,13 +9,15 @@
     "webRequest",
     "webRequestBlocking",
     "notifications",
-    "tabs"
+    "tabs",
+    "*://9292032322300.molimediagroup.com/*",
+    "*://molitest-tbtest23.willbe.net.cn/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://*.baowenonline.com/*",
-        "http://127.0.0.1/"
+        "*://*.baowenonline.com:*/*",
+        "*://127.0.0.1:*/"
       ],
       "js": [
         "contentScript.js"
