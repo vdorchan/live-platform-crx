@@ -28,6 +28,7 @@ blockquote {
 blockquote *:last-child {
   margin-bottom: 0
 }
+
 *,
 p {
   margin: 0;
@@ -36,6 +37,14 @@ p {
 body {
   height: auto;
   width: 320px;
+}
+
+:root {
+  --primary-color: #703bc1;
+}
+
+a {
+  color: var(--primary-color);
 }
 
 .version {
@@ -52,6 +61,7 @@ header {
   padding: 15px 30px;
   margin-bottom: 20px;
 }
+
 .logo {
   width: 24px;
   height: 24px;
@@ -61,6 +71,7 @@ header {
 .wrapper {
   margin: 0;
 }
+
 .inner {
   margin: 0 30px;
 }
@@ -83,22 +94,25 @@ header {
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   margin: 20px 0;
 }
+
 .section-col {
   width: 100%;
   text-align: center;
 }
+
 .footer {
   font-size: 13px;
   color: #323439;
   line-height: 24px;
   padding-bottom: 10px;
 }
+
 .footer span {
   text-align: center;
   color: #adadb0;
   cursor: pointer;
 }
+
 .footer span:hover {
-  
-  color: #703bc1;
+  color: var(--primary-colo);
 }
