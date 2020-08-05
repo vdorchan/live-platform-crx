@@ -37,6 +37,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         document.body.appendChild(iframe)
       }
       iframe.src = request.data
+    } else if (type === 'NOTIFICATION') {
+      window.postMessage({ type: request.type, data: request.data })
     }
   } catch (error) {}
 

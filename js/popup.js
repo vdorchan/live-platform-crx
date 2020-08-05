@@ -1,5 +1,5 @@
 import { checkLatestVersion } from './api'
-import { LIVE_SASS_API, LIVE_SASS_HOSTNAME, isTest, isDev } from './constant'
+import { LIVE_SASS_API, LIVE_SASS_ORIGIN, isTest, isDev } from './constant'
 const $ = (s) => document.querySelector(s)
 const btnCheckUpdate = $('#J-checkUpdate')
 const btnLiveSass = $('#J-liveSass')
@@ -22,12 +22,12 @@ async function setVersionMsg() {
 
 setVersionMsg()
 
-btnCheckUpdate.onclick = () => {
-  if (!setVersionMsg()) alert('你安装的已是最新版本')
+btnCheckUpdate.onclick = async () => {
+  if (!(await setVersionMsg())) alert('你安装的已是最新版本')
 }
 
 btnLiveSass.onclick = () => {
-  window.open(LIVE_SASS_HOSTNAME)
+  window.open(LIVE_SASS_ORIGIN)
 }
 
 const getLiveList = () =>
@@ -53,8 +53,25 @@ const getLiveList = () =>
     $('#J-liveListCount').innerHTML = text
     $('#J-canSyncLiveListCount').innerHTML = text2
     $('#J-canSyncLiveListCount').previousElementSibling.style.display = text2
-      ? 'block'
+      ? 'flex'
       : 'none'
   })
 
 getLiveList()
+
+const totalProgress = $('#totalProgress')
+const liveProgress = $('#liveProgress')
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.data && request.type === 'progress') {
+    const { totalCompleted, total, liveInfo } = request.data
+    if (!liveInfo) {
+      totalProgress.innerHTML = '0'
+      liveProgress.innerHTML = '无同步任务'
+      return
+    }
+
+    totalProgress.innerHTML = `${totalCompleted + 1}/${total}`
+    liveProgress.innerHTML = `正在同步场次：${liveInfo.title}`
+  }
+  sendResponse('')
+})

@@ -7,6 +7,7 @@ import {
   tabs,
   notification,
   log,
+  isContentPage,
 } from './utils'
 
 import { postData } from './api'
@@ -40,6 +41,7 @@ const liveSync = {
   },
   hasLogin: false,
   dataToSave: [],
+  maxTimeout: 1000 * 5,
 
   isErrorTime(time) {
     // 仅保留近30日开播场次数据
@@ -109,6 +111,8 @@ const liveSync = {
     chrome.storage.local.set({ liveList: JSON.stringify(this.liveList) }, () =>
       log.info(actionType.STORE_LIVE_LIST, this.liveList)
     )
+
+    return true
   },
   async getList(currentPage = 1) {
     this.liveListStatus.isIniting = true
@@ -178,6 +182,7 @@ const liveSync = {
       if (
         Object.keys(allQueryParamsObj).every((urlKey) => this.status[urlKey])
       ) {
+        clearTimeout(this.runningTimer)
         this.finish()
       }
     }
@@ -186,7 +191,7 @@ const liveSync = {
     return details.tabId === -1 && !details.frameId
   },
   onBeforeSendHeaders(details) {
-    if (this.isQueryApi(details)) {
+    if (this.ongoing && this.isQueryApi(details)) {
       if (this.isRequestFromBackground(details)) {
         try {
           const header = this.urlListState[details.url].header
@@ -194,7 +199,7 @@ const liveSync = {
             details.requestHeaders = header
           }
         } catch (error) {
-          log.error(BLOCK_HEADERS, error.message)
+          log.error(actionType.BLOCK_HEADERS, error.message)
         }
       } else if (details.frameId) {
         this.startFetch(details)
@@ -249,9 +254,21 @@ const liveSync = {
     })
   },
   reConnectTab(tabId) {
-    if (this.liveToGet.length) {
-      notification('恢复同步', '你回到了豹播，将继续上次未完成的同步')
-      liveSync.startSync(tabId)
+    if (this.liveToGet.length && !this.ongoing) {
+      log.info(actionType.RECONNECT_TAB)
+      this.tabId = tabId
+      this.notifyPage('恢复同步', '你回到了豹播，将继续上次未完成的同步')
+      liveSync.continute(tabId)
+    }
+  },
+  continute(tabId) {
+    if (tabId) {
+      this.tabId = tabId
+    }
+
+    this.initStatus()
+    if (this.fetching.liveInfo) {
+      this.run(this.fetching.liveInfo.id)
     }
   },
   async startSync(tabId, liveId) {
@@ -261,13 +278,16 @@ const liveSync = {
       liveToGet: this.liveToGet,
     })
     if (this.ongoing) {
-      notification('提示', '请等待当前同步完成')
+      this.notifyPage('提示', '请等待当前同步完成')
       return false
     }
 
     this.tabId = tabId
     if (!this.liveList.length) {
-      notification('通知', '首次启动，请等待列表初始化')
+      this.notifyPage(
+        '通知',
+        '首次启动，请等待列表初始化，时长取决于你的列表数量'
+      )
       if (!(await this.initLiveList(true))) {
         return
       }
@@ -278,17 +298,21 @@ const liveSync = {
     } else if (this.liveToGet && this.liveToGet.length) {
     } else {
       this.liveToGet = this.liveListWithData.map((live) => live.id)
-
-      notification(
-        '通知',
-        this.liveToGet.length
-          ? `即将开始同步该账号近30天的直播数据，共${this.liveToGet.length}条`
-          : '该账号下无任何直播场次'
-      )
+      if (!this.liveToGet.length) {
+        return this.notifyPage('通知', '该账号下无任何直播场次')
+      }
     }
-    this.updateTotalPorgress()
+    const total = this.liveToGet.length
 
+    this.updateTotalPorgress(total)
     this.run(this.liveToGet.shift())
+
+    this.notifyPage(
+      '开始同步',
+      this.liveToGet.length > 1
+        ? `即将开始同步该账号近30天的直播数据，共${total}条`
+        : `同步场次：${this.fetching.liveInfo.title}`
+    )
   },
   initStatus() {
     this.ongoing = false
@@ -297,13 +321,16 @@ const liveSync = {
     this.dataToSave = []
   },
   async run(liveId) {
+    if (!this.tabId) {
+      return
+    }
     this.fetching.liveInfo = this.liveList.find(
       (live) => Number(live.id) === Number(liveId)
     )
     log.info(actionType.SINGLE_LIVE_SYNC, this.fetching.liveInfo)
 
     if (!this.fetching.liveInfo) {
-      return this.syncFailed(`该账号下未找 id 为 ${liveId} 的场次`)
+      return this.syncFailed(`该账号下不存在 id 为 ${liveId} 的场次`)
     }
 
     if (this.fetching.liveInfo.status === 4) {
@@ -329,23 +356,20 @@ const liveSync = {
       )
     }
 
-    notification('同步中', `当前同步场次： ${this.fetching.liveInfo.title}`)
     this.initStatus()
     this.ongoing = true
     this.loadIframe(liveId)
   },
   updateTotalPorgress(total) {
-    const totalRest = this.liveToGet.length
-
-    if (!this.fetching.total) {
-      this.fetching.total = totalRest
+    if (typeof total === 'number') {
+      this.fetching.total = total
     }
 
-    this.fetching.totalCompleted = totalRest
+    this.fetching.totalCompleted = this.fetching.total - this.liveToGet.length
     this.fetching.livePercent = 0
 
     chrome.browserAction.setBadgeText({
-      text: String(totalRest || ''),
+      text: String(this.liveToGet.length || ''),
     })
 
     chrome.runtime.sendMessage({
@@ -370,33 +394,50 @@ const liveSync = {
     this.initStatus()
     this.updateTotalPorgress()
   },
+  notifyPage(title, message) {
+    chrome.tabs.sendMessage(
+      this.tabId,
+      {
+        type: 'FROM_LIVE_ASSISTANT_NOTIFICATION',
+        data: { title, message },
+      },
+      (response) => {}
+    )
+  },
   async finish() {
     try {
       await this.save()
-      notification('同步结束', `已同步 ${this.fetching.liveInfo.title}`)
 
       if (this.liveToGet.length) {
         setTimeout(() => {
           this.run(this.liveToGet.shift())
         }, 3000)
+      } else {
+        this.initStatus()
       }
     } catch (error) {
       this.interceptWithErr(`save failed: ${error.message}`)
     }
 
-    this.initStatus()
     this.updateTotalPorgress()
+    this.notifyPage(
+      `已同步 ${this.fetching.totalCompleted}/${this.fetching.total}`,
+      `场次同步完成：${this.fetching.liveInfo.title}`
+    )
   },
-  pause(msg) {
+  pause(msg = '你退出了豹播，同步将会在下次进入豹播后继续') {
+    log.info(actionType.SYNC_PAUSED, msg)
+    notification('同步中断', `${msg}`)
     this.initStatus()
     if (this.fetching.liveInfo) {
       this.liveToGet.unshift(this.fetching.liveInfo.id)
     }
-    notification('同步中断', `${err}`)
   },
   interceptWithErr(err) {
+    this.liveToGet = []
+    this.updateTotalPorgress(0)
     this.initStatus()
-    notification('同步中断', `${err}`)
+    notification('同步发生了错误', `${err}`)
   },
   async save() {
     const liveData = {

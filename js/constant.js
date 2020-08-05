@@ -8,13 +8,13 @@ export const LIVE_LIST_PAGE = `https://${LIVE_PLATFORM_HOST}/live/liveList.htm`
 export const LIVE_ACTION_API = `https://${LIVE_PLATFORM_HOST}/live/action.do`
 export const LIVE_API = 'https://databot.taobao.com/tb/tblive'
 
-export const LIVE_SASS_HOSTNAME = isProd
+export const LIVE_SASS_ORIGIN = isProd
   ? 'https://live.baowenonline.com'
   : isTest
   ? 'https://testlive.baowenonline.com'
-  : 'https://livedev.baowenonline.com'
+  : 'http://localhost.baowenonline.com:8081'
 
-export const LIVE_SASS_API = `${LIVE_SASS_HOSTNAME}/api`
+export const LIVE_SASS_API = `${LIVE_SASS_ORIGIN}/api`
 
 export const DATA_SAVE_BASE_API = isProd
   ? 'http://9292032322300.molimediagroup.com/tblive'
@@ -33,4 +33,6 @@ export const actionType = {
   SINGLE_LIVE_SYNC: 'SINGLE_LIVE_SYNC',
   LIVE_PROGRESS: 'LIVE_PROGRESS',
   SYNC_TAB_REMOVED: 'SYNC_TAB_REMOVED',
+  RECONNECT_TAB: 'RECONNECT_TAB',
+  SYNC_PAUSED: 'SYNC_PAUSED',
 }

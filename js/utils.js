@@ -1,6 +1,6 @@
 import {
   LIVE_LIST_PAGE,
-  LIVE_SASS_HOSTNAME,
+  LIVE_SASS_ORIGIN,
   DATA_SAVE_BASE_API,
 } from './constant'
 
@@ -65,7 +65,6 @@ export async function fetchTaobao(url) {
   return request(url)
 }
 
-
 export const tabs = {
   getIndex(tabId) {
     return new Promise((resolve) =>
@@ -120,7 +119,7 @@ export function notification(title, message, onClick) {
 
 export function isContentPage(url = '') {
   try {
-    return [LIVE_SASS_HOSTNAME, '127.0.0.1'].includes(new URL(url).hostname)
+    return [LIVE_SASS_ORIGIN, '127.0.0.1'].includes(new URL(url).origin)
   } catch (error) {}
 }
 
