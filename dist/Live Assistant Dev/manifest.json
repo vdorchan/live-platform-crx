@@ -1,7 +1,7 @@
 {
-  "name": "Live Assistant",
+  "name": "Live Assistant Dev",
   "version": "0.0.1",
-  "description": "Live Assistant",
+  "description": "Live Assistant Dev",
   "permissions": [
     "storage",
     "*://*.taobao.com/*",
@@ -31,7 +31,7 @@
       "48": "images/icon48.png",
       "128": "images/icon128.png"
     },
-    "default_title": "Live Assistant",
+    "default_title": "Live Assistant Dev",
     "default_popup": "popup.html"
   },
   "background": {
