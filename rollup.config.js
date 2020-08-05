@@ -8,6 +8,7 @@ import copy from 'rollup-plugin-copy'
 const crxName = 'Live Assistant'
 const prodOutput = `dist/${crxName}`
 const testOutput = `dist/${crxName} Test`
+const devOutput = `dist/${crxName} Dev`
 
 const getPlugins = (env, output) => {
   return {
@@ -104,5 +105,36 @@ export default [
       indent: false,
     },
     ...getPlugins('test', testOutput),
+  },
+
+  {
+    input: 'js/background.js',
+    output: {
+      file: `${devOutput}/background.js`,
+      format: 'umd',
+      name: 'background',
+      indent: false,
+    },
+    ...getPlugins('dev', devOutput),
+  },
+  {
+    input: 'js/popup.js',
+    output: {
+      file: `${devOutput}/popup.js`,
+      format: 'umd',
+      name: 'popup',
+      indent: false,
+    },
+    ...getPlugins('dev', devOutput),
+  },
+  {
+    input: 'js/contentScript.js',
+    output: {
+      file: `${devOutput}/contentScript.js`,
+      format: 'umd',
+      name: 'contentScript',
+      indent: false,
+    },
+    ...getPlugins('dev', devOutput),
   }
 ]
