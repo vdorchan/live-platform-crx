@@ -1,5 +1,5 @@
 import { checkLatestVersion } from './api'
-import { LIVE_SASS_API, LIVE_SASS_HOSTNAME } from './constant'
+import { LIVE_SASS_API, LIVE_SASS_HOSTNAME, isTest, isDev } from './constant'
 const $ = (s) => document.querySelector(s)
 const btnCheckUpdate = $('#J-checkUpdate')
 const btnLiveSass = $('#J-liveSass')
@@ -12,9 +12,9 @@ $('#update').onclick = () => {
 }
 
 async function setVersionMsg() {
-  $('#version').innerHTML = `${
-    process.env.NODE_ENV === 'production' ? '' : '开发测试版 '
-  }version ${chrome.app.getDetails().version}`
+  $('#version').innerHTML = `${isTest ? 'test ' : isDev ? 'dev ' : ''}version ${
+    chrome.app.getDetails().version
+  }`
   const latestVersion = await checkLatestVersion()
   $('#update').parentNode.style.display = latestVersion ? 'inline' : 'none'
   return latestVersion

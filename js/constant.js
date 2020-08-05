@@ -1,6 +1,7 @@
-const env = process.env.NODE_ENV
-const isProd = process.env.NODE_ENV === 'production'
-const isTest = process.env.NODE_ENV === 'test'
+export const env = process.env.NODE_ENV
+export const isProd = process.env.NODE_ENV === 'production'
+export const isTest = process.env.NODE_ENV === 'test'
+export const isDev = process.env.NODE_ENV === 'dev'
 
 export const LIVE_PLATFORM_HOST = 'liveplatform.taobao.com'
 export const LIVE_LIST_PAGE = `https://${LIVE_PLATFORM_HOST}/live/liveList.htm`
