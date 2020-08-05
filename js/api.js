@@ -1,17 +1,17 @@
 import { request } from './utils'
-import { LIVE_SASS_HOSTNAME, DATA_SAVE_BASE_API } from './constant'
+import { LIVE_SASS_ORIGIN, DATA_SAVE_BASE_API } from './constant'
 import compareVersions from 'compare-versions'
 
 export function getLatestVersion() {
-  return request(`${LIVE_SASS_HOSTNAME}/api/plugin/version`)
+  return request(`${LIVE_SASS_ORIGIN}/api/plugin/version`)
 }
 
 export function getUserInfo() {
-  return request(`${LIVE_SASS_HOSTNAME}/api/user/getUserInfo?liveType=1`)
+  return request(`${LIVE_SASS_ORIGIN}/api/user/getUserInfo?liveType=1`)
 }
 
 export function getToken(params) {
-  return request(`${LIVE_SASS_HOSTNAME}/api/sl-schedule-lives/token/get`)
+  return request(`${LIVE_SASS_ORIGIN}/api/sl-schedule-lives/token/get`)
 }
 
 export async function checkLatestVersion() {
@@ -25,6 +25,7 @@ export async function checkLatestVersion() {
 
 let mmgsToken
 let refreshTokenTimes = 0
+let accountId
 export async function refreshToken() {
   if (refreshTokenTimes > 3) {
     throw new Error('refresh token too many times')
@@ -38,11 +39,14 @@ export async function postData(url, data, headers) {
   if (!mmgsToken) {
     await refreshToken()
   }
+  if (!accountId) {
+    accountId = (await getUserInfo()).data.id
+  }
   const res = await request(`${DATA_SAVE_BASE_API}${url}`, {
     body: JSON.stringify(data),
     method: 'POST',
     headers: {
-      accountId: 350, // getUserInfo id
+      accountId, // getUserInfo id
       sessionId: mmgsToken,
       'content-type': 'application/json',
     },
