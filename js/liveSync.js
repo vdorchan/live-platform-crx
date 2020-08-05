@@ -10,7 +10,7 @@ import {
 } from './utils'
 
 import { postData } from './api'
-export { urls, allQueryParams, allQueryParamsObj } from './tbQuery'
+import { urls, allQueryParams, allQueryParamsObj } from './tbQuery'
 import {
   LIVE_PLATFORM_HOST,
   LIVE_LIST_PAGE,
@@ -47,7 +47,7 @@ const liveSync = {
     const diffTime = curTime - time
     const isBefore = diffTime / 864e5 > 30
     const isAfter = diffTime < 0
-    if (isBefore && isAfter) {
+    if (!isBefore && !isAfter) {
       return false
     }
     return isBefore ? 'isBefore' : 'isAfter'
@@ -128,7 +128,7 @@ const liveSync = {
   getUrlKey(url) {
     return new URL(decodeURIComponent(url).replace(/\\/g, '')).searchParams
       .get('data')
-      .replace(/[0-9undefined]/g, '')
+      .replace(/[0-9]|\bundefined\b/g, '')
   },
   async startFetch(requestDetails) {
     const urlKey = this.getUrlKey(requestDetails.url)
@@ -458,6 +458,7 @@ const liveSync = {
       }
     }
   },
+  logout() {},
 }
 
 export default liveSync

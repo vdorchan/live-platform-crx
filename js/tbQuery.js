@@ -114,7 +114,7 @@ export const allQueryParams = [
     cubeId: 'tblive_rpt_item_indicator',
     toSaveDataProp: 'productViewDataStr',
     param:
-      '{"param":"{"queryId":"11|33606177|undefined","cubeId":"tblive_rpt_item_indicator","queryDetail":false,"startTime":"2020-07-26 20:00:01","endTime":"2020-07-26 23:00:46","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"商品id","isMeasure":false},{"name":"主图地址","isMeasure":false},{"name":"商品标题","isMeasure":false}]","measure":"[{"name":"商品点击次数","isMeasure":true},{"name":"商品点击人数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200726"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272922348257"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
+      '{"param":"{"queryId":"11|45881285|undefined","cubeId":"tblive_rpt_item_indicator","queryDetail":false,"startTime":"2020-07-25 20:00:43","endTime":"2020-07-25 23:00:45","timeType":2,"sign":null,"limit":2000,"row":"[{"name":"商品id","isMeasure":false}]","measure":"[{"name":"主图地址new","isMeasure":true},{"name":"商品标题new","isMeasure":true},{"name":"商品点击次数","isMeasure":true},{"name":"商品点击人数","isMeasure":true}]","column":"[]","orders":"[]","filter":"[{"name":"开播日期分区字段yyyymmdd","type":"dimension","isMeasure":false,"values":["20200725"],"oper":"="},{"name":"直播间id","type":"dimension","isMeasure":false,"values":["272965417554"],"oper":"="},{"name":"主播id","type":"dimension","isMeasure":false,"values":[2081592196],"oper":"="}]","extra":null}","innerId":""}',
     toSaveApi: 'tbMonitorLiveItem/saveProductViewData',
   },
   // 总览全局数据 商品引导
@@ -129,7 +129,7 @@ export const allQueryParams = [
 
 export const allQueryParamsObj = {}
 allQueryParams.forEach((p) => {
-  allQueryParamsObj[p.param.replace(/[0-9undefined]/g, '')] = {
+  allQueryParamsObj[p.param.replace(/[0-9]|\bundefined\b/g, '')] = {
     cubeId: p.cubeId,
     toSaveDataProp: p.toSaveDataProp,
     toSaveApi: p.toSaveApi,
